@@ -5,6 +5,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct Nodo {
+    char nombre[20];
+    int prioridad;
+    struct Nodo* next;
+};
+
+struct Grafo {
+    struct Nodo* inicio;
+};
+
+struct Nodo* crearNodo(char nombre[], int prioridad) {
+    struct Nodo* nodo = (struct Nodo*)malloc(sizeof(struct Nodo));
+    strcpy(nodo->nombre, nombre);
+    nodo->prioridad = prioridad;
+    nodo->siguiente = NULL;
+    return nodo;
+}
+
 void agregarTarea(grafo){
   
 }
