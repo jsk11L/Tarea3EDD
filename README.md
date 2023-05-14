@@ -15,10 +15,8 @@
 Lo primero que hay que hacer, es en el repositorio de GitHub, apretar el botón que dice **< > Code** y copiar el link que se encuenta abajo de donde dice HTTPS. Nosotros usamos Replit asi que lo que hicimos despúes fue crear un nuevo replit, y seleccionar la opción **Import from Github**, y pegar el link previamente copiado en la sección GitHub URL, luego seleccionamos el botón azul **Import from Github** y el código se importará automáticamente, también, solamente con apretar **Run** el código ya se compila solo y funciona correctamente.
 
 ===== 2 - LO QUE FUNCIONA Y LO QUE NO =====
-  
-Todo funciona correctamente, como es esperado, si se necesita un bitácora podría comentar que se necesito un cambio a grandes rasgos de los TDA's a la hora de crear al función deshacer, a pesar de la dificultad, no hubieron inconvenientes :).
 
-PD: Se nos olvido hacer commits pero deberiamos tener minimo 7 cada uno, principalmente porque la implentación a GitHub fue posterior a la creación del replit, así que la versión actual es una copia, cuando 5/9 funciones ya estaban creadas y funcionando. 
+  
 
 ===== 3 - HERRAMIENTAS UTILIZADAS =====
 
