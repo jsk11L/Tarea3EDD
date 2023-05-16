@@ -10,8 +10,8 @@
 typedef struct {
   char nombreTarea[32];
   int prioridad;
-  bool visitado;
-  bool explorado;
+  bool visited;
+  bool explored;
   List *adj_edges;
 } Nodo;
 
@@ -44,25 +44,27 @@ void leerCadena(char cadena[31]) {
 void agregarTarea(Map *grafo) {
   Nodo *nuevaTarea = (Nodo *)malloc(sizeof(Nodo));
   nuevaTarea->adj_edges = createList();
-  char tarea[32];
+  char nombre[32];
   int prioridad;
   printf("Ingrese el nombre de la tarea\n");
-  leerCadena(tarea);
+  getchar();
+  leerCadena(nombre);
 
   printf("Ingrese la prioridad de la tarea\n");
-  scanf("%i", &prioridad);
+  scanf("%d", &prioridad);
 
-  strcpy(nuevaTarea->nombreTarea, strdup(tarea));
+  strcpy(nuevaTarea->nombreTarea, strdup(nombre));
   nuevaTarea->prioridad = prioridad;
 
   insertMap(grafo, nuevaTarea->nombreTarea, nuevaTarea);
 }
 
-void establecerPrecedencia(Map *grafo) {
+void precedenciaTareas(Map *grafo) {
   char tarea1[32];
   char tarea2[32];
+  getchar();
   printf("Ingrese el nombre de las tareas a asignar precedencia\n");
-  
+
   leerCadena(tarea1);
   if (searchMap(grafo, tarea1) == NULL) {
     printf("La tarea '%s' no existe dentro del programa\n", tarea1);
@@ -77,6 +79,7 @@ void establecerPrecedencia(Map *grafo) {
 
   Nodo *aux1 = searchMap(grafo, tarea1);
   Nodo *aux2 = searchMap(grafo, tarea2);
+
   pushBack(aux1->adj_edges, aux2);
 }
 
@@ -88,7 +91,7 @@ void mostrarTareas(Map *grafo) {
   while (aux != NULL) {
     if(firstList(aux->adj_edges) == NULL) {
       heap_push(monticulo, aux->nombreTarea, aux->prioridad);
-      aux->explorado = true;
+      aux->explored = true;
     } 
     aux = nextMap(grafo);
   }
@@ -98,29 +101,32 @@ void mostrarTareas(Map *grafo) {
     heap_pop(monticulo);
     
     pushBack(listaTareas, actualTarea);
-    actualTarea->visitado = true;
+    actualTarea->visited = true;
     
     Nodo* aux = firstMap(grafo);
     while(aux != NULL) {
-      if(aux->visitado != true) {
+      if(aux->visited != true) {
         bool tienePrecedencia = false;
 
         Nodo* aux2 = firstList(aux->adj_edges);
         while(aux2 != NULL) {
-          if(aux2->visitado != true) {
+          if(aux2->visited != true) {
             tienePrecedencia = true;
             break;
           }
           aux2 = nextList(aux->adj_edges);
         }
 
-        if(tienePrecedencia != true && aux->explorado != true) {
+        if(tienePrecedencia != true && aux->explored != true) {
           heap_push(monticulo, aux, aux->prioridad);
-          aux->explorado = true;
+          aux->explored = true;
         }
+        
       }
+      
       aux = nextMap(grafo);
     }
+    
   }
   
   printf("Lista de tareas por hacer:\n");
@@ -157,20 +163,9 @@ void marcarTareaCompletada(grafo){
   pushBack(aux1->adj_edges, aux2);
 }
 
-void deshacerAccion(grafo){
-  
-}
-
-void cargarArchivo(grafo){
-  //FRAN
-}
-
-void mostrarTitulo(int flag){
-  if (flag == 0) {
-      printf("=========================================\n");
-      printf(" === BIENVENIDO AL MENÚ DE TAREAS === \n");
-    }
-
+void mostrarTitulo(){
+    printf("=========================================\n");
+    printf(" === BIENVENIDO AL MENÚ DE TAREAS === \n");
     printf("=========================================\n");
     printf("Escoja una opción: \n\n");
     printf("1. Agregar tarea\n");
@@ -184,44 +179,39 @@ void mostrarTitulo(int flag){
 }
 
 int main() {
-  //Se inicializa el grafo de las tareas.
   Map *grafo = createMap(is_equal_string);
-  
-  int opcion;
 
-  while(1) {
+  int opcion, titulo = 0;
+
+  while (1) {
     
-    mostrarTitulo(0);
-    
+    mostrarTitulo();
     scanf("%d",&opcion);
-    getchar();
     while(opcion < 1 || opcion > 7) {
-      mostrarTitulo(1);
+      printf("Ingrese una opción correcta\n");
       scanf("%d",&opcion);
-      getchar();
     }
-
-    switch(opcion) {
-      case 1:
-        agregarTarea(grafo);
-        break;
-      case 2:
-        establecerPrecedencia(grafo);
-        break;
-      case 3:
-        mostrarTareas(grafo);
-        break;
-      case 4:
-        marcarTareaCompletada(grafo);
-        break;
-      case 5:
-        deshacerAccion(grafo);
-        break;
-      case 6:
-        cargarArchivo(grafo);
-        break;
-      case 7:
-        printf("Cerrando el programa...\n");
+    switch (opcion) {
+    case 1:
+      agregarTarea(grafo);
+      break;
+    case 2:
+      precedenciaTareas(grafo);
+      break;
+    case 3:
+      mostrarTareas(grafo);
+      break;
+    case 4:
+      marcarTareaCompletada(grafo);
+      break;
+    case 5:
+      printf("Funcion no implementada\n");
+      break;
+    case 6:
+      printf("Funcion no implementada\n");
+      break;
+    case 7:
+      printf("Cerrando el programa...\n");
       return 0;
     }
   }
