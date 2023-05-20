@@ -225,7 +225,7 @@ void mostrarTareas(Map *grafo) {
   printf("Tareas por hacer, ordenadas por prioridad y precedencia:\n");
   Nodo *auxTareas = firstList(listaTareas);
   while (auxTareas != NULL) {
-    printf("Tarea: %s (Prioridad: %d)", auxTareas->nombreTarea, auxTareas->prioridad);
+    printf("Tarea: %s, Prioridad: %d", auxTareas->nombreTarea, auxTareas->prioridad);
 
     Nodo *auxAdj = firstList(auxTareas->adj_edges);
     if (auxAdj != NULL) {
@@ -243,7 +243,35 @@ void mostrarTareas(Map *grafo) {
   free(monticulo);
 }
 
-void marcarTareaCompletada(Map *grafo, Stack *stack){
+void eliminarTarea(Map* grafo,Nodo* nodoTarea, char* nombreTarea, Stack* stack) {
+
+  eraseMap(grafo, nombreTarea);
+
+  Nodo* auxTarea = firstMap(grafo);
+  while(auxTarea != NULL) {
+    Nodo* auxAdj = firstList(auxTarea->adj_edges);
+    while(auxAdj != NULL) {
+      if (strcmp(auxAdj->nombreTarea, nombreTarea) == 0) {
+        popCurrent(auxTarea->adj_edges);
+      }
+      auxAdj = nextList(auxTarea->adj_edges);
+    }
+   auxTarea = nextMap(grafo); 
+  }
+
+
+  Pila* registro = (Pila *) malloc(sizeof(Pila));
+  registro->accion = ELIMINAR_TAREA;
+  
+  strcpy(registro->nombre, nodoTarea->nombreTarea);
+  registro->auxNodo = nodoTarea;
+  stack_push(stack, registro);
+
+  printf("La tarea '%s' ha sido marcada como completada.\n", nombreTarea);
+
+}
+
+void marcarTareaCompletada(Map *grafo, Stack *stack) {
   
   char tarea[32];
   printf("Ingrese el nombre de la tarea completada: ");
@@ -256,27 +284,20 @@ void marcarTareaCompletada(Map *grafo, Stack *stack){
   }
 
   if (firstList(nodoTarea->adj_edges) != NULL) {
-    printf("¡Advertencia! La tarea '%s' tiene relaciones de precedencia con otras tareas.\n",tarea);
-    printf("¿Estás seguro que deseas eliminar la tarea? (s/n): ");
-    char respuesta;
-    scanf(" %c", &respuesta);
-    if (respuesta != 's' && respuesta != 'S') {
+    printf("La tarea '%s' tiene relaciones de precedencia con otras tareas.\n",tarea);
+    printf("¿Estás seguro que deseas eliminar la tarea?\n");
+    printf("  === Ingrese 1 para SÍ , 0 para NO ===\n");
+    int respuesta;
+    scanf("%d", &respuesta);
+    if (respuesta == 0) {
       printf("Operación cancelada. La tarea no ha sido eliminada.\n");
       return;
     }
-  }
-
-  Pila* registro = (Pila *) malloc(sizeof(Pila));
-  registro->accion = ELIMINAR_TAREA;
-  
-  strcpy(registro->nombre, tarea);
-  registro->auxNodo = nodoTarea;
-  stack_push(stack, registro);
-
-  eraseMap(grafo, tarea);
-  printf("La tarea '%s' ha sido marcada como completada y eliminada de la lista de tareas por hacer.\n",tarea);
-
-  
+    if(respuesta == 1) {
+      eliminarTarea(grafo, nodoTarea, tarea, stack);
+    }
+    
+  } else eliminarTarea(grafo, nodoTarea, tarea, stack);
 }
 
 void deshacerAccion(Map *grafo, Stack *stack) {
