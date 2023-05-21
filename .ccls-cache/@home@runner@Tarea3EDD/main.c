@@ -331,7 +331,7 @@ void marcarTareaCompletada(Map *grafo, Stack *stack){
 }
 
 void deshacerAccion(Map *grafo, Stack *stack){
-  //Si la cola está vacía, eviamos el mensaje de que no ha habido ninguna acción
+  //Si la pila está vacía, enviamos el mensaje de que no ha habido ninguna acción
   if(stack_top(stack) == NULL) {
     printf("No hay ninguna acción que deshacer.\n");
     return;
