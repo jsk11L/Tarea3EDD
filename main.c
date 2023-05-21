@@ -12,7 +12,7 @@ typedef struct {
   int prioridad;
   bool visitado;
   bool explorado;
-  List *adj_edges;
+  List *listaPrecedencias;
 } Nodo;
 
 typedef enum Accion {
@@ -26,9 +26,10 @@ typedef struct Pila {
   char nombre[32];
   Accion accion;
   Nodo* auxNodo;
+  List *precedentes;
 } Pila;
 
-const char *get_csv_field (char * tmp, int k) {
+const char *get_csv_field (char * tmp, int k){
     int open_mark = 0;
     char* ret=(char*) malloc (100*sizeof(char));
     int ini_i=0, i=0;
@@ -67,22 +68,22 @@ const char *get_csv_field (char * tmp, int k) {
     return NULL;
 }
 
-int is_equal_string(void *key1, void *key2) {
+int is_equal_string(void *key1, void *key2){
   if (strcmp((char *)key1, (char *)key2) == 0)
     return 1;
   return 0;
 }
 
-void leerCadena(char cadena[31]) {
+void leerCadena(char cadena[31]){
   //Función para simplemente leer strings
   scanf("%30[^\n]s", cadena);
   getchar();
 }
 
-void agregarTarea(Map *grafo, Stack *stack) {
+void agregarTarea(Map *grafo, Stack *stack){
   //Inicializamos variables para guardar datos
   Nodo *nuevaTarea = (Nodo *)malloc(sizeof(Nodo));
-  nuevaTarea->adj_edges = createList();
+  nuevaTarea->listaPrecedencias = createList();
   char tarea[32];
   int prioridad;
   
@@ -108,7 +109,7 @@ void agregarTarea(Map *grafo, Stack *stack) {
   stack_push(stack, registro);
 }
 
-void establecerPrecendencia(Map *grafo, Stack *stack) {
+void establecerPrecendencia(Map *grafo, Stack *stack){
   //Inicializamos variables para guardar datos
   char tarea1[32];
   char tarea2[32];
@@ -124,6 +125,7 @@ void establecerPrecendencia(Map *grafo, Stack *stack) {
   //Hacemos el mismo proceso con la tarea 2 y verificamos que se encuentre en el mapa y que no repita la misma tarea anterior para evitar errores
   printf("Ingrese el nombre de la tarea a preceder: ");
   leerCadena(tarea2);
+  
   while (1) {
     if(strcmp(tarea1,tarea2)==0) printf("ERROR: No puede elegir la misma tarea. Ingrese otra ");
     if(searchMap(grafo, tarea2) == NULL) printf("ERROR: La tarea '%s' no existe dentro del programa. Ingrese otra: ", tarea2);
@@ -134,7 +136,7 @@ void establecerPrecendencia(Map *grafo, Stack *stack) {
   //Asignamos la precedencia
   Nodo *aux1 = searchMap(grafo, tarea1);
   Nodo *aux2 = searchMap(grafo, tarea2);
-  pushBack(aux2->adj_edges, aux1);
+  pushBack(aux2->listaPrecedencias, aux1);
   
   //Guardamos un registro en caso de que el usuario quiera deshacer su acción
   Pila* registro = (Pila *) malloc(sizeof(Pila));
@@ -144,43 +146,43 @@ void establecerPrecendencia(Map *grafo, Stack *stack) {
   stack_push(stack, registro);
 }
 
-void reestablecerBooleanos(Map *grafo) {
+void reestablecerBooleanos(Map *grafo){
   //Función que reestablece los booleanos de mostrarTareas, para que cada vez que se quiera mostrar las tareas, vuelvan al estado normal y todo funcione correctamente
  Nodo *tarea = firstMap(grafo);
     
   while(tarea != NULL) {
     tarea->explorado = false;
-    Nodo *nodoAdj = firstList(tarea->adj_edges);
+    Nodo *nodoAdj = firstList(tarea->listaPrecedencias);
       
     while(nodoAdj != NULL) {
       nodoAdj->visitado = false; 
-      nodoAdj = nextList(tarea->adj_edges);
+      nodoAdj = nextList(tarea->listaPrecedencias);
     }
           
     tarea = nextMap(grafo);
   }
 }
 
-void nodosCompletados(Map *grafo, char *nombreNodo) {
+void nodosCompletados(Map *grafo, char *nombreNodo){
   //Función que marca los nodos completados y asigna el booleano visitado a true
   Nodo *tarea = firstMap(grafo);
   
   while(tarea != NULL) {
   
-    Nodo *nodoAdj = firstList(tarea->adj_edges);
+    Nodo *nodoAdj = firstList(tarea->listaPrecedencias);
 
     while(nodoAdj != NULL) {
       if(strcmp(nodoAdj->nombreTarea, nombreNodo) == 0) {
         nodoAdj->visitado = true;
       }
-      nodoAdj = nextList(tarea->adj_edges);
+      nodoAdj = nextList(tarea->listaPrecedencias);
     }
           
     tarea = nextMap(grafo);
   }
 }
 
-void mostrarTareas(Map *grafo) {
+void mostrarTareas(Map *grafo){
   //Crearemos el montículo para ordenar y la Lista de Tareas para irlas guardando por orden
   Heap *monticulo = createHeap();
   List *listaTareas = createList();
@@ -191,7 +193,7 @@ void mostrarTareas(Map *grafo) {
   //Primero obtenemos los nodos del grafo/mapa que no tienen precedentes y los ingresamos al montículo
   Nodo *aux = firstMap(grafo);
   while(aux != NULL) {
-    if (firstList(aux->adj_edges) == NULL) {
+    if (firstList(aux->listaPrecedencias) == NULL) {
       heap_push(monticulo, aux->nombreTarea, aux->prioridad);
       aux->explorado = true;
     }
@@ -214,13 +216,13 @@ void mostrarTareas(Map *grafo) {
       if (aux->explorado != true) {
         bool tienePrecedencia = false;
 
-        Nodo *aux2 = firstList(aux->adj_edges);
+        Nodo *aux2 = firstList(aux->listaPrecedencias);
         while(aux2 != NULL) {
           if (aux2->visitado != true) {
             tienePrecedencia = true;
             break;
           }
-          aux2 = nextList(aux->adj_edges);
+          aux2 = nextList(aux->listaPrecedencias);
         }
 
         if (tienePrecedencia != true && aux->explorado != true) {
@@ -239,12 +241,12 @@ void mostrarTareas(Map *grafo) {
     printf("Tarea: %s (Prioridad: %d)", auxTareas->nombreTarea, auxTareas->prioridad);
 
     //Hacemos un ciclo para imprimir las precedencias
-    Nodo *auxAdj = firstList(auxTareas->adj_edges);
+    Nodo *auxAdj = firstList(auxTareas->listaPrecedencias);
     if (auxAdj != NULL) {
       printf(" - Precedente:");
       while (auxAdj != NULL) {
         printf(" %s", auxAdj->nombreTarea);
-        auxAdj = nextList(auxTareas->adj_edges);
+        auxAdj = nextList(auxTareas->listaPrecedencias);
       }
     }
 
@@ -256,19 +258,23 @@ void mostrarTareas(Map *grafo) {
   free(monticulo);
 }
 
-void eliminarTarea(Map* grafo,Nodo* nodoTarea, char* nombreTarea, Stack* stack) {
+void eliminarTarea(Map* grafo,Nodo* nodoTarea, char* nombreTarea, Stack* stack){
   //Eliminamos la tarea correspondiente del mapa/grafo
   eraseMap(grafo, nombreTarea);
 
-  //Ahora revisamos las demás tareas para eliminar las precedencias a la tarea ingresada previamente
+  //Creamos la lista temporal para guardar los nodos que tenian de precedente a la tarea a eliminar
+  List *listaTemporal = createList();
+
+  //Ahora revisamos las demás tareas para eliminar las precedencias a la tarea ingresada     previamente
   Nodo* auxTarea = firstMap(grafo);
   while(auxTarea != NULL) {
-    Nodo* auxAdj = firstList(auxTarea->adj_edges);
+    Nodo* auxAdj = firstList(auxTarea->listaPrecedencias);
     while(auxAdj != NULL) {
       if (strcmp(auxAdj->nombreTarea, nombreTarea) == 0) {
-        popCurrent(auxTarea->adj_edges);
+        pushBack(listaTemporal, auxTarea);
+        popCurrent(auxTarea->listaPrecedencias);
       }
-      auxAdj = nextList(auxTarea->adj_edges);
+      auxAdj = nextList(auxTarea->listaPrecedencias);
     }
    auxTarea = nextMap(grafo); 
   }
@@ -278,12 +284,13 @@ void eliminarTarea(Map* grafo,Nodo* nodoTarea, char* nombreTarea, Stack* stack) 
   registro->accion = ELIMINAR_TAREA;
   strcpy(registro->nombre, nodoTarea->nombreTarea);
   registro->auxNodo = nodoTarea;
+  registro->precedentes = listaTemporal;
   stack_push(stack, registro);
 
   printf("La tarea '%s' ha sido marcada como completada.\n", nombreTarea);
 }
 
-void marcarTareaCompletada(Map *grafo, Stack *stack) {
+void marcarTareaCompletada(Map *grafo, Stack *stack){
   //Le pedimos la tarea al usuario y verificamos que se encuentre en el mapa
   char tarea[32];
   printf("Ingrese el nombre de la tarea completada: ");
@@ -294,8 +301,22 @@ void marcarTareaCompletada(Map *grafo, Stack *stack) {
     return;
   }
 
-  //Verificamos si tiene relaciones de precedencia y si el usuario quisiera eliminarla igualmente
-  if (firstList(nodoTarea->adj_edges) != NULL) {
+  //Recorreré el mapa para ver si cualquier nodo tiene de precedente a la tarea
+  bool flag = false;
+  Nodo* auxTarea = firstMap(grafo);
+  while(auxTarea != NULL) {
+    Nodo* auxAdj = firstList(auxTarea->listaPrecedencias);
+    while(auxAdj != NULL) {
+      if (strcmp(auxAdj->nombreTarea, nodoTarea->nombreTarea) == 0){
+        flag = true;
+        break;
+      }
+    }
+   if (flag == true) break;
+   auxTarea = nextMap(grafo); 
+  }
+  
+  if (firstList(nodoTarea->listaPrecedencias) != NULL || flag == true) {
     printf("La tarea '%s' tiene relaciones de precedencia con otras tareas.\n",tarea);
     printf("¿Estás seguro que deseas eliminar la tarea?\n");
     printf("Ingrese 1 para SÍ , 0 para NO: ");
@@ -309,8 +330,8 @@ void marcarTareaCompletada(Map *grafo, Stack *stack) {
   eliminarTarea(grafo, nodoTarea, tarea, stack);
 }
 
-void deshacerAccion(Map *grafo, Stack *stack) {
-  //Si la cola está vacía, eviamos el mensaje de que no ha habido ninguna acción
+void deshacerAccion(Map *grafo, Stack *stack){
+  //Si la pila está vacía, enviamos el mensaje de que no ha habido ninguna acción
   if(stack_top(stack) == NULL) {
     printf("No hay ninguna acción que deshacer.\n");
     return;
@@ -329,28 +350,35 @@ void deshacerAccion(Map *grafo, Stack *stack) {
       //Restauramos la tarea eliminada
       if (searchMap(grafo, aux->nombre) == NULL) {
         insertMap(grafo, aux->nombre, aux->auxNodo);
-        break;
       }
+      //Ahora recorremos la lista de precedentes en caso de que haya y volvemos a añadir la tarea a las listas de precedencia donde estaba previamente
+      Nodo* aux2 = firstList(aux->precedentes);
+      while(aux2 != NULL){
+        Nodo* aux3 = searchMap(grafo,aux2->nombreTarea);
+        pushBack(aux3->listaPrecedencias,aux);
+        aux2 = nextList(aux->precedentes);
+      }
+      break;
     case PRECEDENCIA:
       //Volvemos a asignar las precedencias correspondientes
       if (searchMap(grafo, aux->nombre) != NULL && searchMap(grafo, aux->auxNodo->nombreTarea) != NULL) {
-        Nodo* aux2 = firstList(aux->auxNodo->adj_edges);
+        Nodo* aux2 = firstList(aux->auxNodo->listaPrecedencias);
         while (aux2 != NULL) {
           if (strcmp(aux2->nombreTarea, aux->nombre) == 0) {
-            popCurrent(aux->auxNodo->adj_edges);
+            popCurrent(aux->auxNodo->listaPrecedencias);
             break;
           }
-          nextList(aux->auxNodo->adj_edges);
+          nextList(aux->auxNodo->listaPrecedencias);
         }
       }
   }
 }
 
-void importarArchivo(Map* grafo) {
+void importarArchivo(Map* grafo){
   //Le pedimos al usuario el nombre del archivo a importar
   FILE* archImportar;
   char nombreArchivo[100];
-  printf("Ingrese el nombre del archivo del cual desea importar tareas en formato .csv: ");
+  printf("Ingrese el nombre del archivo en formato .csv: ");
   scanf("%s", nombreArchivo);
 
   //Verificamos si el archivo se pudo abrir correctamente
@@ -371,7 +399,7 @@ void importarArchivo(Map* grafo) {
     //Asignamos memoria a un nuevoNodo que almacenará los datos de cada línea del archivo y a una cadena precedente, que almacenará los precedentes por separado
     Nodo* nuevaTarea = NULL;
     nuevaTarea = (Nodo *)malloc(sizeof(Nodo));
-    nuevaTarea->adj_edges = createList();
+    nuevaTarea->listaPrecedencias = createList();
     char* precedente = "";
 
     //Entramos al for de la función get_csv_field y a sus casos correspondientes
@@ -393,7 +421,7 @@ void importarArchivo(Map* grafo) {
           precedente = strtok(aux, delimit);
           while(precedente != NULL) {
             Nodo *aux2 = searchMap(grafo, precedente);
-            if (aux2 != NULL) pushBack(nuevaTarea->adj_edges, aux2);
+            if (aux2 != NULL) pushBack(nuevaTarea->listaPrecedencias, aux2);
             precedente = strtok(NULL, delimit);
           }
           break;
@@ -409,7 +437,7 @@ void importarArchivo(Map* grafo) {
   fclose(archImportar);
 }
 
-int main() {
+int main(){
   //Creamos el mapa para la tarea y la pila para deshacer acciones
   Map *grafo = createMap(is_equal_string);
   Stack *stack = stack_create();
